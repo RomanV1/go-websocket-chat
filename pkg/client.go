@@ -29,21 +29,12 @@ func (c *Client) SendMessages() {
 		c.Hub.Unregister <- c
 	}()
 
-	for {
-		select {
-		case message, ok := <-c.Send:
-			if !ok {
-				log.Printf("error receiving message")
-				c.Hub.Unregister <- c
-				return
-			}
-
-			err := c.Conn.WriteMessage(websocket.TextMessage, message)
-			if err != nil {
-				log.Printf("error sending message: %v", err)
-				c.Hub.Unregister <- c
-				return
-			}
+	for message := range c.Send {
+		err := c.Conn.WriteMessage(websocket.TextMessage, message)
+		if err != nil {
+			log.Printf("error sending message: %v", err)
+			c.Hub.Unregister <- c
+			return
 		}
 	}
 }
